@@ -1,13 +1,13 @@
 (ns clicker.core
   (:require
    [clicker.mui :as mui]
-   [reagent.core :as reagent :refer [atom]]))
+   [reagent.core :as reagent]))
 
 (enable-console-print!)
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (atom {:text "Hello world!"}))
+(defonce app-state (reagent/atom {:text "Hello world!"}))
 
 
 (defn hello-world []
