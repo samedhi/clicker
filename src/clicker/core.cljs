@@ -1,5 +1,7 @@
 (ns clicker.core
-    (:require [reagent.core :as reagent :refer [atom]]))
+  (:require
+   [clicker.mui :as mui]
+   [reagent.core :as reagent :refer [atom]]))
 
 (enable-console-print!)
 
@@ -13,7 +15,8 @@
 (defn hello-world []
   [:div
    [:h1 (:text @app-state)]
-   [:h3 "Edit this and watch it change!"]])
+   [:h3 "Edit this and watch it change!"]
+   [mui/button "My first button"]])
 
 (reagent/render-component [hello-world]
                           (. js/document (getElementById "app")))
