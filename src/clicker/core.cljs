@@ -1,6 +1,7 @@
 (ns clicker.core
   (:require
    [clicker.mui :as mui]
+   [firemore.core :as firemore]
    [reagent.core :as reagent]))
 
 (enable-console-print!)
