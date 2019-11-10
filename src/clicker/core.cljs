@@ -1,6 +1,7 @@
 (ns clicker.core
   (:require
    [clicker.mui :as mui]
+   [clicker.hashtels :as hashtels]
    [clojure.string :as string]
    [firemore.core :as firemore]
    [reagent.core :as reagent]))
@@ -10,15 +11,6 @@
 ;; define your app data so that it doesn't get over-written on reload
 
 (defonce app-state (reagent/atom {:text "Hello world!"}))
-
-(defn n-from-hash-of [o]
-  (let [n (* 10 1000)]
-    (-> o hash (mod n) (/ n))))
-
-;; https://stackoverflow.com/questions/43193341/how-to-generate-random-pastel-or-brighter-color-in-javascript
-(defn pastel [o]
-  (let [n (n-from-hash-of o)]
-    (str "hsl(" (* 360 n) ",70%,85%)")))
 
 (defn hello-world []
   [:<>
@@ -36,7 +28,7 @@
            :let [s (str sym)]]
        ^{:key s}
        [mui/grid {:item true :xs 12}
-        [mui/card {:style (merge {:background-color (pastel s)}
+        [mui/card {:style (merge {:background-color (hashtels/pastel s)}
                                  (when (= 'walrus sym)
                                    {:border "2px solid black"}))}
          [mui/card-content
