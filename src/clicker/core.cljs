@@ -1,6 +1,7 @@
 (ns clicker.core
   (:require
    [clicker.mui :as mui]
+   [clojure.string :as string]
    [firemore.core :as firemore]
    [reagent.core :as reagent]))
 
@@ -30,16 +31,17 @@
      [mui/button {:color :inherit} "Login"]]]
 
    [mui/container {:style {:margin-top "5em"}}
-    [mui/grid-list {:cell-height 120  :cols 1}
+    [mui/grid {:container true :spacing 2}
      (for [sym '(I am the walrus Goo goo g'joob)
            :let [s (str sym)]]
-       [mui/grid-list-tile {:key s
-                            :style {:background-color (pastel s)}}
-        [mui/grid-list-tile-bar
-         {:title (str "A study in '" s "'")
-          :subtitle (str "by: " s "-kun")}]
-        [mui/typography s]])]]])
-
+       ^{:key s}
+       [mui/grid {:item true :xs 12}
+        [mui/card {:style {:background-color (pastel s)}}
+         [mui/card-content
+          [mui/typography {:variant :h5 :component :h2}
+           (string/capitalize s)]
+          [mui/typography {:color :textSecondary :gutter-bottom true}
+           "Word of the day"]]]])]]])
 
 (reagent/render-component [hello-world]
                           (. js/document (getElementById "app")))
