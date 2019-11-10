@@ -2,6 +2,7 @@
   (:require
    [clicker.mui :as mui]
    [clicker.hashtels :as hashtels]
+   [clicker.silly-names :as silly-names]
    [clojure.string :as string]
    [firemore.core :as firemore]
    [reagent.core :as reagent]))
@@ -35,7 +36,7 @@
           [mui/typography {:variant :h5 :component :h2}
            (string/capitalize s)]
           [mui/typography {:color :textSecondary :gutter-bottom true}
-           "Word of the day"]]]])]]])
+           (silly-names/random)]]]])]]])
 
 (reagent/render-component [hello-world]
                           (. js/document (getElementById "app")))
