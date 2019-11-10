@@ -36,7 +36,9 @@
            :let [s (str sym)]]
        ^{:key s}
        [mui/grid {:item true :xs 12}
-        [mui/card {:style {:background-color (pastel s)}}
+        [mui/card {:style (merge {:background-color (pastel s)}
+                                 (when (= 'walrus sym)
+                                   {:border "2px solid black"}))}
          [mui/card-content
           [mui/typography {:variant :h5 :component :h2}
            (string/capitalize s)]
