@@ -1,17 +1,67 @@
 (ns clicker.core
   (:require
+   [cljs.core.async :as async]
    [clicker.mui :as mui]
    [clicker.hashtels :as hashtels]
    [clicker.silly-names :as silly-names]
    [clojure.string :as string]
    [firemore.core :as firemore]
-   [reagent.core :as reagent]))
+   [firemore.firestore :as firemore.firestore]
+   [reagent.core :as reagent])
+  (:require-macros
+   [cljs.core.async.macros :refer [go-loop go]]))
 
 (enable-console-print!)
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (reagent/atom {:text "Hello world!"}))
+;; STATE
+
+(defonce app (reagent/atom {:text "Hello world!"}))
+
+;; ACTIONS
+
+(defn create-game [user-id]
+  (go
+    (async/<!
+     (firemore.firestore/add-db! [:games] {:user user-id :name "The greatest show on Earth"}))))
+
+#_(create-game "test-user-id")
+
+(defn add-player [game-id user-id]
+  (go
+    (async/<!
+     (firemore/write!
+      [:games game-id :players user-id]
+      {:score 0 :user-id user-id}))))
+
+#_(add-player "IBbIOTrgDzTGyJOPmy1W" "test-user-id")
+
+(defn join-game [game-id user-id]
+  (go
+    (firemore/add! app [:game] [:games game-id])
+    (firemore/add! app [:players] [:games game-id :players])))
+
+#_(join-game "IBbIOTrgDzTGyJOPmy1W")
+
+(defn leave-game [game-id]
+  (go
+    (async/<!
+     (firemore/subtract! app [:game]))))
+
+#_(leave-game "IBbIOTrgDzTGyJOPmy1W")
+
+(defn click-player [game-id user-id]
+  (go
+    (let [reference [:games game-id :players user-id]
+          old-xs (get-in @app [:firestore :players])]
+      (when-let [old (->> old-xs (filter #(= (:user-id %) user-id)) first)]
+        (let [{:keys [score]} old]
+          (firemore/merge! reference {:score (inc score)}))))))
+
+#_(click-player "IBbIOTrgDzTGyJOPmy1W" "test-user-id")
+
+;; VIEWS
 
 (defn hello-world []
   [:<>
