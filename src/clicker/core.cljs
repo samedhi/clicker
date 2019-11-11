@@ -19,7 +19,7 @@
 
 (defonce app (reagent/atom {:text "Hello world!"}))
 
-(def game-id (atom nil))
+(defonce game-id (atom nil))
 
 ;; ACTIONS
 
@@ -42,7 +42,7 @@
 
 #_(add-player @game-id "test-user-id")
 
-(defn join-game [game-id user-id]
+(defn join-game [game-id]
   (go
     (firemore/add! app [:game] [:games game-id])
     (firemore/add! app [:players] [:games game-id :players])))
@@ -56,42 +56,50 @@
 
 #_(leave-game @game-id)
 
-(defn click-player [game-id user-id]
+(defn update-player [game-id user-id fx]
   (go
     (let [reference [:games game-id :players user-id]
           old-xs (get-in @app [:firestore :players])]
       (when-let [old (->> old-xs (filter #(= (:user-id %) user-id)) first)]
         (let [{:keys [score]} old]
-          (firemore/merge! reference {:score (inc score)}))))))
+          (firemore/merge! reference {:score (fx score)}))))))
 
-#_(click-player @game-id "test-user-id")
+(defn inc-player [game-id user-id]
+  (update-player game-id user-id inc))
+
+(defn dec-player [game-id user-id]
+  (update-player game-id user-id dec))
 
 ;; VIEWS
 
 (defn hello-world []
-  [:<>
-   [mui/app-bar {:position :fixed :style {:flex-grow 1}}
-    [mui/toolbar
-     [mui/icon-button {:edge :start :color :inherit}
-      [mui/icon "menu"]]
-     [mui/typography {:variant :h6 :style {:flex-grow 1}}
-      "Clicker"]
-     [mui/button {:color :inherit} "Login"]]]
+  (let [{:keys [game players]} (:firestore @app)
+        game-id (-> game meta :id)]
+    [:<>
+     [mui/app-bar {:position :fixed :style {:flex-grow 1}}
+      [mui/toolbar
+       [mui/icon-button {:edge :start :color :inherit}
+        [mui/icon "menu"]]
+       [mui/typography {:variant :h6 :style {:flex-grow 1}}
+        "Clicker"]
+       [mui/button {:color :inherit} "Login"]]]
 
-   [mui/container {:style {:margin-top "5em"}}
-    [mui/grid {:container true :spacing 2}
-     (for [sym '(I am the walrus Goo goo g'joob)
-           :let [s (str sym)]]
-       ^{:key s}
-       [mui/grid {:item true :xs 12}
-        [mui/card {:style (merge {:background-color (hashtels/pastel s)}
-                                 (when (= 'walrus sym)
-                                   {:border "2px solid black"}))}
-         [mui/card-content
-          [mui/typography {:variant :h5 :component :h2}
-           (string/capitalize s)]
-          [mui/typography {:color :textSecondary :gutter-bottom true}
-           (silly-names/random)]]]])]]])
+     [mui/container {:style {:margin-top "5em"}}
+      [mui/grid {:container true :spacing 2}
+       (for [{:keys [score user-id] :as player} players
+             :let [me? (= user-id "test-user-id")]]
+         ^{:key user-id}
+         [mui/grid {:item true :xs 12}
+          [mui/card {:on-click (if me?
+                                 #(inc-player game-id user-id)
+                                 #(dec-player game-id user-id))
+                     :style (merge {:background-color (hashtels/pastel user-id)}
+                                   (when me? {:border "2px solid black"}))}
+           [mui/card-content
+            [mui/typography {:variant :h5 :component :h2}
+             user-id]
+            [mui/typography {:color :textSecondary :gutter-bottom true}
+             (-> user-id hash silly-names/consistent)]]]])]]]))
 
 (reagent/render-component [hello-world]
                           (. js/document (getElementById "app")))

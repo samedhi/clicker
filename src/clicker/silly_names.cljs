@@ -35,5 +35,10 @@
    "Weiners", "Whipkey", "Wigglesworth", "Wimplesnatch", "Winterkorn",
    "Woolysocks"])
 
+(defn consistent [i]
+  (str (nth first-names (mod i (count first-names)))
+       " "
+       (nth last-names (mod i (count last-names)))))
+
 (defn random []
   (str (rand-nth first-names) " " (rand-nth last-names)))
