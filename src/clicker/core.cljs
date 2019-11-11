@@ -19,19 +19,15 @@
 
 (defonce app (reagent/atom {:text "Hello world!"}))
 
-(defonce game-id (atom nil))
+(go (swap! app assoc :my-user-id (async/<! (firemore/uid))))
 
 ;; ACTIONS
 
 (defn create-game [user-id]
   (go
-    (reset!
-     game-id
-     (:id
-      (async/<!
-       (firemore.firestore/add-db! [:games] {:user user-id :name "The greatest show on Earth"}))))))
-
-#_(create-game "test-user-id")
+    (:id
+     (async/<!
+      (firemore.firestore/add-db! [:games] {:user user-id :name "The greatest show on Earth"})))))
 
 (defn add-player [game-id user-id]
   (go
@@ -40,21 +36,15 @@
       [:games game-id :players user-id]
       {:score 0 :user-id user-id}))))
 
-#_(add-player @game-id "test-user-id")
-
 (defn join-game [game-id]
   (go
     (firemore/add! app [:game] [:games game-id])
     (firemore/add! app [:players] [:games game-id :players])))
 
-#_(join-game @game-id)
-
 (defn leave-game [game-id]
   (go
     (async/<!
      (firemore/subtract! app [:game]))))
-
-#_(leave-game @game-id)
 
 (defn update-player [game-id user-id fx]
   (go
@@ -73,7 +63,8 @@
 ;; VIEWS
 
 (defn hello-world []
-  (let [{:keys [game players]} (:firestore @app)
+  (let [{:keys [firestore my-user-id]} @app
+        {:keys [game players]} firestore
         game-id (-> game meta :id)]
     [:<>
      [mui/app-bar {:position :fixed :style {:flex-grow 1}}
@@ -85,9 +76,10 @@
        [mui/button {:color :inherit} "Login"]]]
 
      [mui/container {:style {:margin-top "5em"}}
+      [mui/typography (pr-str @app)]
       [mui/grid {:container true :spacing 2}
        (for [{:keys [score user-id] :as player} players
-             :let [me? (= user-id "test-user-id")]]
+             :let [me? (= user-id my-user-id)]]
          ^{:key user-id}
          [mui/grid {:item true :xs 12}
           [mui/card {:on-click (if me?
