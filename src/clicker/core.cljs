@@ -19,12 +19,17 @@
 
 (defonce app (reagent/atom {:text "Hello world!"}))
 
+(def game-id (atom nil))
+
 ;; ACTIONS
 
 (defn create-game [user-id]
   (go
-    (async/<!
-     (firemore.firestore/add-db! [:games] {:user user-id :name "The greatest show on Earth"}))))
+    (reset!
+     game-id
+     (:id
+      (async/<!
+       (firemore.firestore/add-db! [:games] {:user user-id :name "The greatest show on Earth"}))))))
 
 #_(create-game "test-user-id")
 
@@ -35,21 +40,21 @@
       [:games game-id :players user-id]
       {:score 0 :user-id user-id}))))
 
-#_(add-player "IBbIOTrgDzTGyJOPmy1W" "test-user-id")
+#_(add-player @game-id "test-user-id")
 
 (defn join-game [game-id user-id]
   (go
     (firemore/add! app [:game] [:games game-id])
     (firemore/add! app [:players] [:games game-id :players])))
 
-#_(join-game "IBbIOTrgDzTGyJOPmy1W")
+#_(join-game @game-id)
 
 (defn leave-game [game-id]
   (go
     (async/<!
      (firemore/subtract! app [:game]))))
 
-#_(leave-game "IBbIOTrgDzTGyJOPmy1W")
+#_(leave-game @game-id)
 
 (defn click-player [game-id user-id]
   (go
@@ -59,7 +64,7 @@
         (let [{:keys [score]} old]
           (firemore/merge! reference {:score (inc score)}))))))
 
-#_(click-player "IBbIOTrgDzTGyJOPmy1W" "test-user-id")
+#_(click-player @game-id "test-user-id")
 
 ;; VIEWS
 
