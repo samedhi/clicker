@@ -69,11 +69,11 @@
     [:<>
      [mui/app-bar {:position :fixed :style {:flex-grow 1}}
       [mui/toolbar
-       [mui/icon-button {:edge :start :color :inherit}
-        [mui/icon "menu"]]
        [mui/typography {:variant :h6 :style {:flex-grow 1}}
         "Clicker"]
-       [mui/button {:color :inherit} "Login"]]]
+       [mui/typography {:variant :h4 :style {:flex-grow 1}}
+        (-> my-user-id hash silly-names/consistent)]
+       [mui/button {:color :inherit} "New Game"]]]
 
      [mui/container {:style {:margin-top "5em"}}
       [mui/typography (pr-str @app)]
