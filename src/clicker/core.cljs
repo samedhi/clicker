@@ -7,6 +7,7 @@
    [clojure.string :as string]
    [firemore.core :as firemore]
    [firemore.firestore :as firemore.firestore]
+   [goog.object :as goog.object]
    [reagent.core :as reagent])
   (:require-macros
    [cljs.core.async.macros :refer [go-loop go]]))
@@ -23,11 +24,27 @@
 
 ;; ACTIONS
 
+(defn join-game [game-id]
+  (go
+    (firemore/add! app [:game] [:games game-id])
+    (firemore/add! app [:players] [:games game-id :players])))
+
+(let [game-id js/window.location.hash]
+  (println :game-id game-id)
+  (when-not (string/blank? game-id)
+    (-> game-id
+        (subs 1)
+        join-game)))
+
 (defn create-game [user-id]
   (go
-    (:id
-     (async/<!
-      (firemore.firestore/add-db! [:games] {:user user-id :name "The greatest show on Earth"})))))
+    (let [game-id
+          (->> (firemore.firestore/add-db! [:games] {:user user-id
+                                                     :name "The greatest show on Earth"})
+               async/<!
+               :id)]
+      (goog.object/set js/window.location "hash" game-id)
+      (join-game game-id))))
 
 (defn add-player [game-id user-id]
   (go
@@ -35,11 +52,6 @@
      (firemore/write!
       [:games game-id :players user-id]
       {:score 0 :user-id user-id}))))
-
-(defn join-game [game-id]
-  (go
-    (firemore/add! app [:game] [:games game-id])
-    (firemore/add! app [:players] [:games game-id :players])))
 
 (defn leave-game [game-id]
   (go
@@ -69,11 +81,15 @@
     [:<>
      [mui/app-bar {:position :fixed :style {:flex-grow 1}}
       [mui/toolbar
+
        [mui/typography {:variant :h6 :style {:flex-grow 1}}
         "Clicker"]
        [mui/typography {:variant :h4 :style {:flex-grow 1}}
         (-> my-user-id hash silly-names/consistent)]
-       [mui/button {:color :inherit} "New Game"]]]
+       [mui/button {:variant :outlined
+                    :color :inherit
+                    :on-click #(create-game my-user-id)}
+        "New Game"]]]
 
      [mui/container {:style {:margin-top "5em"}}
       [mui/typography (pr-str @app)]
