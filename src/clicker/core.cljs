@@ -23,40 +23,33 @@
 ;; ACTIONS
 
 (defn add-player [game-id user-id]
-  (go
-    (async/<!
-     (firemore/write!
-      [:games game-id :players user-id]
-      {:score 0 :user-id user-id}))))
+  (go (firemore/write!
+       [:games game-id :players user-id]
+       {:score 0 :user-id user-id})))
 
 (defn join-game [game-id user-id]
-  (go
-    (add-player game-id user-id)
-    (firemore/add! app [:game] [:games game-id])
-    (firemore/add! app [:players] [:games game-id :players])))
+  (go (add-player game-id user-id)
+      (firemore/add! app [:game] [:games game-id])
+      (firemore/add! app [:players] [:games game-id :players])))
 
 (defn create-game [user-id]
-  (go
-    (let [game-id
-          (->> (firemore.firestore/add-db! [:games] {:user user-id
-                                                     :name "The greatest show on Earth"})
-               async/<!
-               :id)]
-      (goog.object/set js/window.location "hash" game-id)
-      (join-game game-id (-> @app :my-user-id)))))
+  (go (let [game-id (->> (firemore.firestore/add-db! [:games] {:user user-id
+                                                               :name "The greatest show on Earth"})
+                         async/<!
+                         :id)]
+        (goog.object/set js/window.location "hash" game-id)
+        (join-game game-id user-id))))
 
 (defn leave-game [game-id]
-  (go
-    (async/<!
-     (firemore/subtract! app [:game]))))
+  (go (firemore/subtract! app [:game])
+      (firemore/subtract! app [:players])))
 
 (defn update-player [game-id user-id fx]
-  (go
-    (let [reference [:games game-id :players user-id]
-          old-xs (get-in @app [:firestore :players])]
-      (when-let [old (->> old-xs (filter #(= (:user-id %) user-id)) first)]
-        (let [{:keys [score]} old]
-          (firemore/merge! reference {:score (fx score)}))))))
+  (go (let [reference [:games game-id :players user-id]
+            old-xs (get-in @app [:firestore :players])]
+        (when-let [old (->> old-xs (filter #(= (:user-id %) user-id)) first)]
+          (let [{:keys [score]} old]
+            (firemore/merge! reference {:score (fx score)}))))))
 
 (defn inc-player [game-id user-id]
   (update-player game-id user-id inc))
