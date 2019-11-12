@@ -18,23 +18,22 @@
 
 ;; STATE
 
-(defonce app (reagent/atom {:text "Hello world!"}))
-
-(go (swap! app assoc :my-user-id (async/<! (firemore/uid))))
+(defonce app (reagent/atom {}))
 
 ;; ACTIONS
 
-(defn join-game [game-id]
+(defn add-player [game-id user-id]
   (go
+    (async/<!
+     (firemore/write!
+      [:games game-id :players user-id]
+      {:score 0 :user-id user-id}))))
+
+(defn join-game [game-id user-id]
+  (go
+    (add-player game-id user-id)
     (firemore/add! app [:game] [:games game-id])
     (firemore/add! app [:players] [:games game-id :players])))
-
-(let [game-id js/window.location.hash]
-  (println :game-id game-id)
-  (when-not (string/blank? game-id)
-    (-> game-id
-        (subs 1)
-        join-game)))
 
 (defn create-game [user-id]
   (go
@@ -44,14 +43,7 @@
                async/<!
                :id)]
       (goog.object/set js/window.location "hash" game-id)
-      (join-game game-id))))
-
-(defn add-player [game-id user-id]
-  (go
-    (async/<!
-     (firemore/write!
-      [:games game-id :players user-id]
-      {:score 0 :user-id user-id}))))
+      (join-game game-id (-> @app :my-user-id)))))
 
 (defn leave-game [game-id]
   (go
@@ -105,15 +97,19 @@
                                    (when me? {:border "2px solid black"}))}
            [mui/card-content
             [mui/typography {:variant :h5 :component :h2}
-             user-id]
+             (-> user-id hash silly-names/consistent)]
             [mui/typography {:color :textSecondary :gutter-bottom true}
-             (-> user-id hash silly-names/consistent)]]]])]]]))
+             user-id]]]])]]]))
 
 (reagent/render-component [hello-world]
                           (. js/document (getElementById "app")))
 
-(defn on-js-reload []
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
-)
+;; INIT
+(go
+  (let [user-id (async/<! (firemore/uid))
+        game-id js/window.location.hash]
+    (swap! app assoc :my-user-id user-id)
+    (when-not (string/blank? game-id)
+      (-> game-id
+          (subs 1)
+          (join-game user-id)))))
