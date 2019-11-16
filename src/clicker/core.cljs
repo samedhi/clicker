@@ -92,7 +92,7 @@
             [mui/typography {:variant :h5 :component :h2}
              (-> user-id hash silly-names/consistent)]
             [mui/typography {:color :textSecondary :gutter-bottom true}
-             user-id]]]])]]]))
+             (str "Score: " score)]]]])]]]))
 
 (reagent/render-component [hello-world]
                           (. js/document (getElementById "app")))
