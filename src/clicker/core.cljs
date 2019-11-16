@@ -89,10 +89,21 @@
                      :style (merge {:background-color (hashtels/pastel user-id)}
                                    (when me? {:border "2px solid black"}))}
            [mui/card-content
-            [mui/typography {:variant :h5 :component :h2}
-             (-> user-id hash silly-names/consistent)]
-            [mui/typography {:color :textSecondary :gutter-bottom true}
-             (str "Score: " score)]]]])]]]))
+            [mui/grid {:container true}
+             [mui/grid {:item true
+                        :container true
+                        :xs 4
+                        :justify :center
+                        :align-items :center}
+              [mui/grid {:item true}
+               [mui/typography {:variant :h5
+                                :component :h2}
+                (-> user-id hash silly-names/consistent)]]]
+             [mui/grid {:item true :xs 4}
+              [mui/typography {:align :center
+                               :variant :h4
+                               :color :textSecondary}
+               (str "Score: " score)]]]]]])]]]))
 
 (reagent/render-component [hello-world]
                           (. js/document (getElementById "app")))
