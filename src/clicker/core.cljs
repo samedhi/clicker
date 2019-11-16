@@ -18,7 +18,7 @@
 
 ;; STATE
 
-(defonce app (reagent/atom {}))
+(defonce app (reagent/atom {:history {}}))
 
 ;; ACTIONS
 
@@ -57,10 +57,51 @@
 (defn dec-player [game-id user-id]
   (update-player game-id user-id dec))
 
+(def index->weight
+  {0 2
+   1 4
+   2 8
+   3 16
+   4 16})
+
+(defn add-to-history [history player]
+  (let [{:keys [user-id score]} player]
+    (-> history
+        (update user-id #(cons score %))
+        (update user-id #(take (-> index->weight count inc) %)))))
+
+(defn update-history [app]
+  (let [{:keys [players]} (:firestore app)]
+    (update app
+            :history
+            #(reduce
+              add-to-history
+              %
+              players))))
+
+(def instance-uuid (atom (random-uuid)))
+
+(go-loop [my-uuid @instance-uuid]
+  (async/<! (async/timeout 1000))
+  (when (= my-uuid @instance-uuid)
+    (swap! app update-history)
+    (recur my-uuid)))
+
+(defn average-delta [vs]
+  (->> (partition 2 1 vs)
+       (map-indexed (fn [i [old new]] (/ (- old new) (index->weight i))))
+       (reduce +)))
+
+(defn colorize [n]
+  [mui/typography {:align :right
+                   :variant :h4
+                   :style {:color (if (neg? n) "red" "green")}}
+   n])
+
 ;; VIEWS
 
 (defn hello-world []
-  (let [{:keys [firestore my-user-id]} @app
+  (let [{:keys [firestore my-user-id history]} @app
         {:keys [game players]} firestore
         game-id (-> game meta :id)]
     [:<>
@@ -89,10 +130,29 @@
                      :style (merge {:background-color (hashtels/pastel user-id)}
                                    (when me? {:border "2px solid black"}))}
            [mui/card-content
-            [mui/typography {:variant :h5 :component :h2}
-             (-> user-id hash silly-names/consistent)]
-            [mui/typography {:color :textSecondary :gutter-bottom true}
-             user-id]]]])]]]))
+            [mui/grid {:container true}
+             [mui/grid {:item true
+                        :container true
+                        :xs 4
+                        :justify :center
+                        :align-items :center}
+              [mui/grid {:item true}
+               [mui/typography {:variant :h5
+                                :component :h2}
+                (-> user-id hash silly-names/consistent)]]]
+             [mui/grid {:item true :xs 4}
+              [mui/typography {:align :center
+                               :variant :h4
+                               :color :textSecondary}
+               (str "Score: " score)]]
+             [mui/grid {:item true
+                        :container true
+                        :justify :flex-end
+                        :xs 4}
+              (-> (get history user-id)
+                  (or [0 0 0 0 0])
+                  average-delta
+                  colorize)]]]]])]]]))
 
 (reagent/render-component [hello-world]
                           (. js/document (getElementById "app")))
