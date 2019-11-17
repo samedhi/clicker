@@ -93,11 +93,12 @@
        (reduce +)))
 
 (defn colorize [n]
-  [mui/typography {:align :right
-                   :variant :h4
-                   :style {:color (if (neg? n) "red" "green")
-                           :user-select :none}}
-   n])
+  (when-not (zero? n)
+    [mui/typography {:align :right
+                     :variant :h4
+                     :style {:color (if (neg? n) "red" "green")
+                             :user-select :none}}
+     n]))
 
 ;; VIEWS
 
@@ -125,10 +126,12 @@
              :let [me? (= user-id my-user-id)]]
          ^{:key user-id}
          [mui/grid {:item true :xs 12}
-          [mui/card {:on-click (if me?
+          [mui/button-base {:style {:width "100%"}}
+           [mui/card {:on-click (if me?
                                  #(inc-player game-id user-id)
                                  #(dec-player game-id user-id))
-                     :style (merge {:background-color (hashtels/pastel user-id)}
+                      :style (merge {:background-color (hashtels/pastel user-id)
+                                     :width "100%"}
                                    (when me? {:border "2px solid black"}))}
            [mui/card-content
             [mui/grid {:container true}
@@ -155,7 +158,7 @@
               (-> (get history user-id)
                   (or [0 0 0 0 0])
                   average-delta
-                  colorize)]]]]])]]]))
+                  colorize)]]]]]])]]]))
 
 (reagent/render-component [hello-world]
                           (. js/document (getElementById "app")))
