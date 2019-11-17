@@ -33,10 +33,13 @@
       (firemore/add! app [:players] [:games game-id :players])))
 
 (defn create-game [user-id]
-  (go (let [game-id (->> (firemore.firestore/add-db! [:games] {:user user-id
-                                                               :name "The greatest show on Earth"})
+  (go (let [game-id (->> (firemore/push! [:games]
+                                         {:user user-id
+                                          :name "The greatest show on Earth"})
                          async/<!
                          :id)]
+
+
         (goog.object/set js/window.location "hash" game-id)
         (join-game game-id user-id))))
 
