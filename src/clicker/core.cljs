@@ -1,6 +1,7 @@
 (ns clicker.core
   (:require
    [cljs.core.async :as async]
+   [cljs.pprint]
    [clicker.mui :as mui]
    [clicker.hashtels :as hashtels]
    [clicker.silly-names :as silly-names]
@@ -38,8 +39,6 @@
                                           :name "The greatest show on Earth"})
                          async/<!
                          :id)]
-
-
         (goog.object/set js/window.location "hash" game-id)
         (join-game game-id user-id))))
 
@@ -113,7 +112,7 @@
      [mui/app-bar {:position :fixed :style {:flex-grow 1}}
       [mui/toolbar
 
-       [mui/typography {:variant :h6 :style {:flex-grow 1}}
+       [mui/typography{:variant :h6 :style {:flex-grow 1}}
         "Clicker"]
        [mui/typography {:variant :h4 :style {:flex-grow 1}}
         (-> my-user-id hash silly-names/consistent)]
@@ -123,7 +122,8 @@
         "New Game"]]]
 
      [mui/container {:style {:margin-top "5em"}}
-      [mui/typography (pr-str @app)]
+      ;; uncomment next line to see app state
+      ;; [:pre (with-out-str (cljs.pprint/pprint @app))]
       [mui/grid {:container true :spacing 2}
        (for [{:keys [score user-id] :as player} players
              :let [me? (= user-id my-user-id)]]
