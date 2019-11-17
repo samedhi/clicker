@@ -95,7 +95,8 @@
 (defn colorize [n]
   [mui/typography {:align :right
                    :variant :h4
-                   :style {:color (if (neg? n) "red" "green")}}
+                   :style {:color (if (neg? n) "red" "green")
+                           :user-select :none}}
    n])
 
 ;; VIEWS
@@ -138,12 +139,14 @@
                         :align-items :center}
               [mui/grid {:item true}
                [mui/typography {:variant :h5
-                                :component :h2}
+                                :component :h2
+                                :style {:user-select :none}}
                 (-> user-id hash silly-names/consistent)]]]
              [mui/grid {:item true :xs 4}
               [mui/typography {:align :center
                                :variant :h4
-                               :color :textSecondary}
+                               :color :textSecondary
+                               :style {:user-select :none}}
                (str "Score: " score)]]
              [mui/grid {:item true
                         :container true
