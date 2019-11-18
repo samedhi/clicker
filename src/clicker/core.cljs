@@ -31,7 +31,7 @@
 (defn join-game [game-id user-id]
   (go (add-player game-id user-id)
       (firemore/add! app [:game] [:games game-id])
-      (firemore/add! app [:players] [:games game-id :players])))
+      (firemore/add! app [:players] [:games game-id :players {:order [[:score "desc"]]}])))
 
 (defn create-game [user-id]
   (go (let [game-id (->> (firemore/push! [:games]
